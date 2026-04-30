@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giriş Yap — Lezzet Defteri</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">🍴 Lezzet<span>Defteri</span></a>
+    <nav id="nav-dynamic"></nav>
+  </div>
+</header>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-card-header">
+      <span class="emoji">🔑</span>
+      <h1>Hoş Geldiniz</h1>
+      <p>Tariflerinize devam etmek için giriş yapın</p>
+    </div>
+
+    <div class="alert alert-error" id="alert-error">
+      <span>⚠️</span>
+      <span id="alert-error-msg">Hata mesajı</span>
+    </div>
+    <div class="alert alert-success" id="alert-success">
+      <span>✓</span>
+      <span>Giriş başarılı! Yönlendiriliyorsunuz...</span>
+    </div>
+
+    <form id="login-form" novalidate>
+      <div class="form-group">
+        <label for="username">Kullanıcı Adı</label>
+        <input type="text" id="username" name="username" placeholder="Kullanıcı adınız" autocomplete="username" />
+        <div class="field-error" id="username-error"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Şifre</label>
+        <input type="password" id="password" name="password" placeholder="Şifreniz" autocomplete="current-password" />
+        <div class="field-error" id="password-error"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary form-btn" id="submit-btn">Giriş Yap</button>
+    </form>
+
+    <p class="form-switch">Hesabın yok mu? <a href="/auth/register">Kayıt Ol</a></p>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (getUser()) window.location.href = '/';
+  });
+
+  function showFieldError(id, errorId, msg) {
+    const input = document.getElementById(id);
+    const err = document.getElementById(errorId);
+    input.classList.add('error');
+    err.textContent = msg;
+    err.classList.add('visible');
+  }
+  function clearFieldError(id, errorId) {
+    document.getElementById(id).classList.remove('error');
+    document.getElementById(errorId).classList.remove('visible');
+  }
+
+  document.getElementById('username').addEventListener('input', () => clearFieldError('username','username-error'));
+  document.getElementById('password').addEventListener('input', () => clearFieldError('password','password-error'));
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    let valid = true;
+
+    if (!username) { showFieldError('username','username-error','Kullanıcı adı boş olamaz.'); valid = false; }
+    if (!password) { showFieldError('password','password-error','Şifre boş olamaz.'); valid = false; }
+    if (!valid) return;
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Giriş yapılıyor...';
+
+    // Global alert gizle
+    document.getElementById('alert-error').classList.remove('visible');
+
+    try {
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setUser(data.user);
+        document.getElementById('alert-success').classList.add('visible');
+        setTimeout(() => window.location.href = '/', 1000);
+      } else {
+        document.getElementById('alert-error-msg').textContent = data.message;
+        document.getElementById('alert-error').classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Giriş Yap';
+      }
+    } catch {
+      document.getElementById('alert-error-msg').textContent = 'Sunucu hatası. Lütfen tekrar deneyin.';
+      document.getElementById('alert-error').classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Giriş Yap';
+    }
+  });
+</script>
+</body>
+</html>
