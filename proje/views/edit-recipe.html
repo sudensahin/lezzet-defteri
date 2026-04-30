@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tarif Düzenle — Lezzet Defteri</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">🍴 Lezzet<span>Defteri</span></a>
+    <nav id="nav-dynamic"></nav>
+  </div>
+</header>
+
+<main>
+  <div class="form-page" id="page-content">
+    <div class="loading-wrap"><div class="spinner"></div><p>Tarif yükleniyor...</p></div>
+  </div>
+</main>
+
+<script src="/js/auth.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+  const recipeId = window.location.pathname.split('/').pop();
+
+  async function loadAndRender() {
+    const user = getUser();
+
+    // Auth guard
+    if (!user) {
+      document.getElementById('page-content').innerHTML = `
+        <div class="empty-state">
+          <span class="emoji">🔒</span>
+          <h3>Giriş Gerekli</h3>
+          <p>Bu sayfaya erişmek için giriş yapmalısınız.</p>
+          <a href="/auth/login" class="btn btn-primary" style="margin-top:1rem">Giriş Yap</a>
+        </div>`;
+      return;
+    }
+
+    try {
+      const res = await fetch(`/recipes/${recipeId}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const recipe = data.recipe;
+
+      // Ownership guard
+      if (recipe.author !== user.username) {
+        document.getElementById('page-content').innerHTML = `
+          <div class="empty-state">
+            <span class="emoji">⛔</span>
+            <h3>Erişim Reddedildi</h3>
+            <p>Bu tarifi sadece yazan kişi düzenleyebilir.</p>
+            <a href="/" class="btn btn-primary" style="margin-top:1rem">Ana Sayfa</a>
+          </div>`;
+        return;
+      }
+
+      renderForm(recipe);
+    } catch {
+      document.getElementById('page-content').innerHTML = `
+        <div class="empty-state">
+          <span class="emoji">😔</span>
+          <h3>Tarif bulunamadı</h3>
+          <a href="/" class="btn btn-primary" style="margin-top:1rem">Ana Sayfa</a>
+        </div>`;
+    }
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderForm(recipe) {
+    document.getElementById('page-content').innerHTML = `
+      <div class="form-card">
+        <div class="form-card-header">
+          <h1>✏️ Tarifi Düzenle</h1>
+          <p>${escHtml(recipe.title)}</p>
+        </div>
+
+        <div class="alert alert-error" id="alert-error" style="display:none">
+          <span>⚠️</span>
+          <span id="alert-error-msg"></span>
+        </div>
+
+        <form id="edit-form" novalidate>
+          <div class="form-group">
+            <label for="title">Yemek Adı *</label>
+            <input type="text" id="title" value="${escHtml(recipe.title)}" maxlength="100" />
+            <div class="field-error" id="title-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Kısa Açıklama</label>
+            <input type="text" id="description" value="${escHtml(recipe.description || '')}" maxlength="200" />
+          </div>
+
+          <div class="form-group">
+            <label for="ingredients">Malzemeler *</label>
+            <textarea id="ingredients" rows="5">${escHtml(recipe.ingredients)}</textarea>
+            <div class="field-error" id="ingredients-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="instructions">Hazırlanışı *</label>
+            <textarea id="instructions" rows="8">${escHtml(recipe.instructions)}</textarea>
+            <div class="field-error" id="instructions-error"></div>
+          </div>
+
+          <div style="display:flex;gap:1rem;margin-top:0.5rem">
+            <button type="submit" class="btn btn-gold" id="submit-btn" style="flex:1">💾 Değişiklikleri Kaydet</button>
+            <a href="/recipes/view/${recipe.id}" class="btn btn-outline">İptal</a>
+          </div>
+        </form>
+      </div>
+    `;
+
+    // Validation & submit
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      let valid = true;
+      ['title','ingredients','instructions'].forEach(id => {
+        const val = document.getElementById(id).value.trim();
+        const errEl = document.getElementById(`${id}-error`);
+        if (!val) {
+          document.getElementById(id).classList.add('error');
+          errEl.textContent = 'Bu alan boş bırakılamaz.';
+          errEl.classList.add('visible');
+          valid = false;
+        } else {
+          document.getElementById(id).classList.remove('error');
+          errEl.classList.remove('visible');
+        }
+      });
+      if (!valid) return;
+
+      const user = getUser();
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor...';
+
+      try {
+        const res = await fetch(`/recipes/${recipeId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: document.getElementById('title').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            ingredients: document.getElementById('ingredients').value.trim(),
+            instructions: document.getElementById('instructions').value.trim(),
+            requestingUser: user.username
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast('Tarif güncellendi! ✓', 'success');
+          setTimeout(() => window.location.href = `/recipes/view/${recipeId}`, 900);
+        } else {
+          document.getElementById('alert-error-msg').textContent = data.message;
+          document.getElementById('alert-error').style.display = 'flex';
+          btn.disabled = false;
+          btn.textContent = '💾 Değişiklikleri Kaydet';
+        }
+      } catch {
+        document.getElementById('alert-error-msg').textContent = 'Sunucu hatası.';
+        document.getElementById('alert-error').style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = '💾 Değişiklikleri Kaydet';
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', loadAndRender);
+</script>
+</body>
+</html>
