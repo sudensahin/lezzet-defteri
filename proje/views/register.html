@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kayıt Ol — Lezzet Defteri</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">🍴 Lezzet<span>Defteri</span></a>
+    <nav id="nav-dynamic"></nav>
+  </div>
+</header>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-card-header">
+      <span class="emoji">✨</span>
+      <h1>Hesap Oluştur</h1>
+      <p>Tariflerini paylaşmaya başla</p>
+    </div>
+
+    <div class="alert alert-error" id="alert-error">
+      <span>⚠️</span>
+      <span id="alert-error-msg">Hata mesajı</span>
+    </div>
+    <div class="alert alert-success" id="alert-success">
+      <span>✓</span>
+      <span>Kayıt başarılı! Yönlendiriliyorsunuz...</span>
+    </div>
+
+    <form id="register-form" novalidate>
+      <div class="form-group">
+        <label for="username">Kullanıcı Adı</label>
+        <input type="text" id="username" name="username" placeholder="örn: şefmehmet" autocomplete="username" />
+        <div class="field-error" id="username-error"></div>
+        <div class="field-hint">En az 3 karakter, en fazla 20 karakter.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Şifre</label>
+        <input type="password" id="password" name="password" placeholder="En az 6 karakter" autocomplete="new-password" />
+        <div class="field-error" id="password-error"></div>
+        <div class="field-hint">En az 6 karakter.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="password-confirm">Şifre Tekrar</label>
+        <input type="password" id="password-confirm" name="password-confirm" placeholder="Şifreyi tekrar girin" autocomplete="new-password" />
+        <div class="field-error" id="password-confirm-error"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary form-btn" id="submit-btn">Kayıt Ol</button>
+    </form>
+
+    <p class="form-switch">Zaten hesabın var mı? <a href="/auth/login">Giriş Yap</a></p>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+  // Giriş yapmış kullanıcıyı yönlendir
+  document.addEventListener('DOMContentLoaded', () => {
+    if (getUser()) window.location.href = '/';
+  });
+
+  // ── VALIDATION ──
+  function validateField(id, errorId, rules) {
+    const input = document.getElementById(id);
+    const errorEl = document.getElementById(errorId);
+    const value = input.value.trim();
+    let error = '';
+
+    for (const rule of rules) {
+      if (!rule.test(value)) { error = rule.message; break; }
+    }
+
+    if (error) {
+      input.classList.add('error');
+      errorEl.textContent = error;
+      errorEl.classList.add('visible');
+    } else {
+      input.classList.remove('error');
+      errorEl.classList.remove('visible');
+    }
+    return !error;
+  }
+
+  const usernameRules = [
+    { test: v => v.length > 0,  message: 'Kullanıcı adı boş bırakılamaz.' },
+    { test: v => v.length >= 3, message: 'Kullanıcı adı en az 3 karakter olmalıdır.' },
+    { test: v => v.length <= 20, message: 'Kullanıcı adı en fazla 20 karakter olabilir.' },
+    { test: v => /^[a-zA-Z0-9_çğıöşüÇĞİÖŞÜ]+$/.test(v), message: 'Sadece harf, rakam ve alt çizgi kullanılabilir.' }
+  ];
+
+  const passwordRules = [
+    { test: v => v.length > 0,  message: 'Şifre boş bırakılamaz.' },
+    { test: v => v.length >= 6, message: 'Şifre en az 6 karakter olmalıdır.' },
+  ];
+
+  document.getElementById('username').addEventListener('blur', () => validateField('username', 'username-error', usernameRules));
+  document.getElementById('password').addEventListener('blur', () => validateField('password', 'password-error', passwordRules));
+  document.getElementById('password-confirm').addEventListener('blur', () => {
+    const pw = document.getElementById('password').value;
+    const pw2 = document.getElementById('password-confirm').value;
+    const errorEl = document.getElementById('password-confirm-error');
+    const input = document.getElementById('password-confirm');
+    if (pw !== pw2) {
+      input.classList.add('error');
+      errorEl.textContent = 'Şifreler eşleşmiyor.';
+      errorEl.classList.add('visible');
+      return false;
+    }
+    input.classList.remove('error');
+    errorEl.classList.remove('visible');
+    return true;
+  });
+
+  // ── FORM SUBMIT ──
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const valid1 = validateField('username', 'username-error', usernameRules);
+    const valid2 = validateField('password', 'password-error', passwordRules);
+    const pw  = document.getElementById('password').value;
+    const pw2 = document.getElementById('password-confirm').value;
+    const errorEl = document.getElementById('password-confirm-error');
+    const pw2Input = document.getElementById('password-confirm');
+    let valid3 = true;
+    if (pw !== pw2) {
+      pw2Input.classList.add('error');
+      errorEl.textContent = 'Şifreler eşleşmiyor.';
+      errorEl.classList.add('visible');
+      valid3 = false;
+    }
+
+    if (!valid1 || !valid2 || !valid3) return;
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Kaydediliyor...';
+
+    try {
+      const res = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('username').value.trim(),
+          password: pw
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setUser(data.user);
+        document.getElementById('alert-success').classList.add('visible');
+        setTimeout(() => window.location.href = '/', 1200);
+      } else {
+        document.getElementById('alert-error-msg').textContent = data.message;
+        document.getElementById('alert-error').classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Kayıt Ol';
+      }
+    } catch {
+      document.getElementById('alert-error-msg').textContent = 'Sunucu hatası. Lütfen tekrar deneyin.';
+      document.getElementById('alert-error').classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Kayıt Ol';
+    }
+  });
+</script>
+</body>
+</html>
