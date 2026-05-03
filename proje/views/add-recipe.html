@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tarif Ekle — Lezzet Defteri</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">🍴 Lezzet<span>Defteri</span></a>
+    <nav id="nav-dynamic"></nav>
+  </div>
+</header>
+
+<main>
+  <div class="form-page">
+    <!-- Auth Guard -->
+    <div id="auth-guard" style="display:none">
+      <div class="empty-state">
+        <span class="emoji">🔒</span>
+        <h3>Giriş Gerekli</h3>
+        <p>Tarif eklemek için önce giriş yapmanız gerekiyor.</p>
+        <div style="display:flex;gap:1rem;justify-content:center;margin-top:1.5rem">
+          <a href="/auth/login" class="btn btn-primary">Giriş Yap</a>
+          <a href="/auth/register" class="btn btn-outline">Kayıt Ol</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form (giriş yapılmışsa göster) -->
+    <div id="form-wrapper" style="display:none">
+      <div class="form-card">
+        <div class="form-card-header">
+          <h1>🍳 Yeni Tarif Ekle</h1>
+          <p>Favori tarifini toplulukla paylaş</p>
+        </div>
+
+        <div class="alert alert-error" id="alert-error">
+          <span>⚠️</span>
+          <span id="alert-error-msg"></span>
+        </div>
+
+        <form id="add-recipe-form" novalidate>
+          <div class="form-group">
+            <label for="title">Yemek Adı *</label>
+            <input type="text" id="title" name="title" placeholder="örn: Nohutlu Pilav" maxlength="100" />
+            <div class="field-error" id="title-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Kısa Açıklama</label>
+            <input type="text" id="description" name="description" placeholder="Bu yemeği bir cümleyle anlat" maxlength="200" />
+            <div class="field-hint">Opsiyonel. Ana sayfada kart açıklaması olarak gösterilir.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="ingredients">Malzemeler *</label>
+            <textarea id="ingredients" name="ingredients" placeholder="Her malzemeyi virgülle veya yeni satırla ayırın&#10;örn: 2 su bardağı pirinç, 1 su bardağı nohut, tuz" rows="5"></textarea>
+            <div class="field-error" id="ingredients-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="instructions">Hazırlanışı *</label>
+            <textarea id="instructions" name="instructions" placeholder="Adım adım hazırlanışı yazın&#10;1. Önce pirinci yıkayın...&#10;2. ..." rows="8"></textarea>
+            <div class="field-error" id="instructions-error"></div>
+          </div>
+
+          <div style="display:flex;gap:1rem;margin-top:0.5rem">
+            <button type="submit" class="btn btn-primary" id="submit-btn" style="flex:1">Tarifi Yayınla</button>
+            <a href="/" class="btn btn-outline">İptal</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="/js/auth.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = getUser();
+    if (!user) {
+      document.getElementById('auth-guard').style.display = 'block';
+    } else {
+      document.getElementById('form-wrapper').style.display = 'block';
+    }
+  });
+
+  function validateRequired(id, errorId, label) {
+    const val = document.getElementById(id).value.trim();
+    const errEl = document.getElementById(errorId);
+    const input = document.getElementById(id);
+    if (!val) {
+      input.classList.add('error');
+      errEl.textContent = `${label} boş bırakılamaz.`;
+      errEl.classList.add('visible');
+      return false;
+    }
+    input.classList.remove('error');
+    errEl.classList.remove('visible');
+    return true;
+  }
+
+  ['title','ingredients','instructions'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => {
+      document.getElementById(id).classList.remove('error');
+      document.getElementById(`${id}-error`)?.classList.remove('visible');
+    });
+  });
+
+  document.getElementById('add-recipe-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const v1 = validateRequired('title', 'title-error', 'Yemek adı');
+    const v2 = validateRequired('ingredients', 'ingredients-error', 'Malzemeler');
+    const v3 = validateRequired('instructions', 'instructions-error', 'Hazırlanış');
+    if (!v1 || !v2 || !v3) return;
+
+    const user = getUser();
+    if (!user) { window.location.href = '/auth/login'; return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Yayınlanıyor...';
+
+    try {
+      const res = await fetch('/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: document.getElementById('title').value.trim(),
+          description: document.getElementById('description').value.trim(),
+          ingredients: document.getElementById('ingredients').value.trim(),
+          instructions: document.getElementById('instructions').value.trim(),
+          author: user.username
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showToast('Tarif başarıyla eklendi! 🎉', 'success');
+        setTimeout(() => window.location.href = `/recipes/view/${data.recipe.id}`, 1000);
+      } else {
+        document.getElementById('alert-error-msg').textContent = data.message;
+        document.getElementById('alert-error').classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Tarifi Yayınla';
+      }
+    } catch {
+      document.getElementById('alert-error-msg').textContent = 'Sunucu hatası oluştu.';
+      document.getElementById('alert-error').classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Tarifi Yayınla';
+    }
+  });
+</script>
+</body>
+</html>
