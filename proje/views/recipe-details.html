@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tarif Detayı — Lezzet Defteri</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">🍴 Lezzet<span>Defteri</span></a>
+    <nav id="nav-dynamic"></nav>
+  </div>
+</header>
+
+<main>
+  <div class="recipe-detail-page" id="recipe-detail-page">
+    <div class="loading-wrap"><div class="spinner"></div><p>Tarif yükleniyor...</p></div>
+  </div>
+</main>
+
+<footer>
+  <p>Sevgiyle pişirildi 🍅 <strong>Lezzet Defteri</strong></p>
+</footer>
+
+<script src="/js/auth.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+  const recipeId = window.location.pathname.split('/').pop();
+
+  async function loadRecipe() {
+    try {
+      const res = await fetch(`/recipes/${recipeId}`);
+      if (!res.ok) throw new Error('not found');
+      const data = await res.json();
+      renderRecipe(data.recipe);
+    } catch {
+      document.getElementById('recipe-detail-page').innerHTML = `
+        <div class="empty-state">
+          <span class="emoji">😔</span>
+          <h3>Tarif bulunamadı</h3>
+          <p>Bu tarif mevcut değil veya silinmiş olabilir.</p>
+          <a href="/" class="btn btn-primary" style="margin-top:1rem">Ana Sayfaya Dön</a>
+        </div>`;
+    }
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderRecipe(recipe) {
+    const user = getUser();
+    const isOwner = user && user.username === recipe.author;
+    const date = new Date(recipe.createdAt).toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+    const updated = recipe.updatedAt
+      ? `<span class="meta-badge">✏️ Güncellendi: ${new Date(recipe.updatedAt).toLocaleDateString('tr-TR')}</span>`
+      : '';
+
+    // Malzemeleri madde madde göster
+    const ingredientLines = (recipe.ingredients || '')
+      .split(/[,،\n]/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(item => `<li>${escHtml(item)}</li>`)
+      .join('');
+
+    const ownerActions = isOwner ? `
+      <a href="/recipes/view/edit/${recipe.id}" class="btn btn-gold">✏️ Düzenle</a>
+      <button class="btn btn-danger" id="delete-btn">🗑️ Sil</button>
+    ` : '';
+
+    document.getElementById('recipe-detail-page').innerHTML = `
+      <a href="/" style="display:inline-flex;align-items:center;gap:0.4rem;color:var(--text-light);font-size:0.85rem;text-decoration:none;margin-bottom:1.5rem;">
+        ← Tüm Tarifler
+      </a>
+
+      <div class="recipe-header">
+        <h1>${escHtml(recipe.title)}</h1>
+        <div class="recipe-header-meta">
+          <span class="meta-badge">👤 ${escHtml(recipe.author)}</span>
+          <span class="meta-badge">📅 ${date}</span>
+          ${updated}
+        </div>
+      </div>
+
+      ${recipe.description ? `<div class="recipe-description-box">${escHtml(recipe.description)}</div>` : ''}
+
+      <div class="recipe-section">
+        <h2 class="recipe-section-title">🛒 Malzemeler</h2>
+        <ul class="ingredients-list">${ingredientLines}</ul>
+      </div>
+
+      <div class="recipe-section">
+        <h2 class="recipe-section-title">📋 Hazırlanışı</h2>
+        <div class="instructions-text">${escHtml(recipe.instructions)}</div>
+      </div>
+
+      ${isOwner ? `<div class="recipe-actions">${ownerActions}</div>` : ''}
+    `;
+
+    if (isOwner) {
+      document.getElementById('delete-btn').addEventListener('click', () => {
+        showConfirm(
+          'Tarifi Sil',
+          `"${recipe.title}" tarifini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`,
+          () => deleteRecipe(recipe.id)
+        );
+      });
+    }
+  }
+
+  async function deleteRecipe(id) {
+    const user = getUser();
+    try {
+      const res = await fetch(`/recipes/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestingUser: user.username })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Tarif başarıyla silindi.', 'success');
+        setTimeout(() => window.location.href = '/', 1200);
+      } else {
+        showToast(data.message, 'error');
+      }
+    } catch {
+      showToast('Silme işlemi başarısız.', 'error');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadRecipe);
+</script>
+</body>
+</html>
