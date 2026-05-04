@@ -47,7 +47,7 @@ function createUser(username, password) {
 
 // Kullanıcı doğrula (login)
 function validateUser(username, password) {
-  const user = findByUsername(username);
+  const user = findByUsegrname(username);
   if (!user) return { success: false, message: 'Kullanıcı bulunamadı.' };
   if (user.password !== password) return { success: false, message: 'Şifre yanlış.' };
   return { success: true, user: { id: user.id, username: user.username } };
