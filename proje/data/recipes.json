@@ -1,0 +1,38 @@
+[
+  {
+    "id": "1",
+    "title": "Mercimek Çorbası",
+    "description": "Geleneksel Türk mutfağının vazgeçilmezi, kadife dokusunda sıcacık bir çorba.",
+    "ingredients": "1 su bardağı kırmızı mercimek, 1 orta boy soğan, 2 diş sarımsak, 2 yemek kaşığı tereyağı, 1 çay kaşığı kimyon, 1 çay kaşığı kırmızı toz biber, tuz, karabiber, 4 su bardağı su veya et suyu",
+    "instructions": "1. Mercimeği yıkayın ve süzün.\n2. Tencerede tereyağını eritin, doğranmış soğan ve sarımsağı ekleyip pembeleşene kadar kavurun.\n3. Mercimeği ekleyin, karıştırın.\n4. Su veya et suyunu ilave edin, kaynamaya bırakın.\n5. Mercimekler yumuşayana kadar kısık ateşte 20-25 dakika pişirin.\n6. Blenderdan geçirin, pürüzsüz hale getirin.\n7. Baharatları ekleyip 5 dakika daha kaynatın.\n8. Üzerine kızdırılmış tereyağı ve kırmızı biber gezdirerek servis yapın.",
+    "author": "admin",
+    "createdAt": "2024-01-15T10:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "title": "Karnıyarık",
+    "description": "Kıymalı iç harcıyla doldurulmuş, fırında pişirilmiş nefis bir Türk yemeği.",
+    "ingredients": "4 adet uzun patlıcan, 300g kıyma, 2 soğan, 3 domates, 2 diş sarımsak, 2 sivri biber, maydanoz, sıvıyağ, tuz, karabiber, salça",
+    "instructions": "1. Patlıcanları yıkayıp, soyma bıçağıyla yollu şekilde soyun.\n2. Tuzlu suda 30 dakika bekletin, sıkın ve yağda kızartın.\n3. Kıymayı soğan ve sarımsakla kavurun.\n4. Domates, biber ve baharatları ekleyin, 10 dakika pişirin.\n5. Patlıcanları fırın tepsisine alın, ortasını açın.\n6. Her patlıcanın içine iç harcından koyun.\n7. Üzerine domates dilimi ve biber koyun.\n8. 180°C fırında 25-30 dakika pişirin.",
+    "author": "admin",
+    "createdAt": "2024-01-16T12:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "title": "Sütlaç",
+    "description": "Kremalı yapısıyla gönülleri fetheden, fırında üzeri kızarmış klasik Türk sütlacı.",
+    "ingredients": "1 litre süt, 4 yemek kaşığı pirinç unu, 5 yemek kaşığı toz şeker, 1 paket vanilya, 1 çorba kaşığı nişasta",
+    "instructions": "1. Pirinç unu, nişasta ve şekeri bir tencerede karıştırın.\n2. Soğuk sütü yavaş yavaş ekleyerek pürüzsüz bir karışım elde edin.\n3. Orta ateşte, sürekli karıştırarak koyulaşana kadar pişirin.\n4. Vanilyayı ekleyin, karıştırın.\n5. Fırın kaplarına dökün.\n6. 200°C fırının üst rafında üzeri kızarana kadar 10-15 dakika pişirin.\n7. Soğuyunca buzdolabında bekletin ve soğuk servis yapın.",
+    "author": "admin",
+    "createdAt": "2024-01-17T14:00:00.000Z"
+  },
+  {
+    "id": "1777548067604",
+    "title": "ggg",
+    "description": "ddddssss",
+    "ingredients": "mlkpş",
+    "instructions": "osakdşapscf",
+    "author": "şefmelek",
+    "createdAt": "2026-04-30T11:21:07.604Z"
+  }
+]

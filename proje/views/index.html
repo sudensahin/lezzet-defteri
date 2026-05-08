@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lezzet Defteri — Yemek Tarifleri</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">🍴 Lezzet<span>Defteri</span></a>
+    <nav id="nav-dynamic">
+      <a href="/auth/login">Giriş Yap</a>
+      <a href="/auth/register" class="nav-cta">Kayıt Ol</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <span class="hero-emoji">🥘</span>
+    <h1>Mutfağınıza<br><em>Lezzet Katın</em></h1>
+    <p>Binlerce yıllık Türk mutfağı geleneğinden ilham alan, evde kolayca yapabileceğiniz özgün tarifler.</p>
+    <div class="hero-actions">
+      <a href="#recipes" class="btn btn-primary">Tarifleri Keşfet</a>
+      <a href="/auth/register" class="btn btn-secondary" id="hero-register-btn">Tarif Paylaş</a>
+    </div>
+  </section>
+
+  <!-- Recipe List -->
+  <section id="recipes">
+    <div class="section-header">
+      <h2 class="section-title">📖 Tüm Tarifler</h2>
+      <span class="section-count" id="recipe-count"></span>
+    </div>
+    <div id="recipe-grid" class="recipe-grid">
+      <!-- JS ile doldurulacak -->
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Sevgiyle pişirildi 🍅 <strong>Lezzet Defteri</strong> — MVC Mimarisi Demo</p>
+</footer>
+
+<script src="/js/auth.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+  const EMOJIS = ['🍲','🥘','🫕','🍛','🫔','🥗','🍝','🍜','🥙','🫓','🍱','🥧'];
+
+  async function loadRecipes() {
+    showLoading('recipe-grid', 'Tarifler yükleniyor...');
+    try {
+      const res = await fetch('/recipes');
+      const data = await res.json();
+      renderRecipes(data.recipes);
+    } catch (err) {
+      document.getElementById('recipe-grid').innerHTML =
+        '<p style="color:var(--terracotta);padding:2rem">Tarifler yüklenirken hata oluştu.</p>';
+    }
+  }
+
+  function renderRecipes(recipes) {
+    const grid = document.getElementById('recipe-grid');
+    const countEl = document.getElementById('recipe-count');
+
+    countEl.textContent = `${recipes.length} tarif`;
+
+    if (!recipes.length) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <span class="emoji">🍽️</span>
+          <h3>Henüz tarif yok</h3>
+          <p>İlk tarifi siz ekleyin!</p>
+          <a href="/recipes/view/add" class="btn btn-primary" style="margin-top:1rem">Tarif Ekle</a>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = recipes.map((recipe, i) => {
+      const emoji = EMOJIS[i % EMOJIS.length];
+      const date = new Date(recipe.createdAt).toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+      const desc = recipe.description || 'Bu tarif için açıklama girilmemiş.';
+      return `
+        <article class="recipe-card" onclick="window.location='/recipes/view/${recipe.id}'">
+          <div class="card-top">
+            <span class="card-emoji">${emoji}</span>
+            <div class="card-meta">
+              <h3 class="card-title">${escHtml(recipe.title)}</h3>
+              <span class="card-author">@${escHtml(recipe.author)}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="card-description">${escHtml(desc)}</p>
+          </div>
+          <div class="card-footer">
+            <span class="card-date">${date}</span>
+            <span class="btn btn-outline btn-sm">Tarifi Gör →</span>
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Giriş yapmış kullanıcıya hero butonunu güncelle
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = getUser();
+    if (user) {
+      const btn = document.getElementById('hero-register-btn');
+      if (btn) { btn.href = '/recipes/view/add'; btn.textContent = '+ Tarif Ekle'; }
+    }
+    loadRecipes();
+  });
+</script>
+</body>
+</html>
