@@ -1,3 +1,4 @@
+console.log("DİKKAT: app.js çalışmaya başladı!");
 const express = require('express');
 const path = require('path');
 
@@ -12,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// View engine: plain HTML files served via routes
+// Views
 app.set('views', path.join(__dirname, 'views'));
 
 // Routes
@@ -24,7 +25,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-// 404 handler
+// 404
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
 });
