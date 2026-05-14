@@ -9,7 +9,7 @@ function readUsers() {
     const data = fs.readFileSync(DATA_PATH, 'utf-8');
     return JSON.parse(data);
   } catch (err) {
-    return [];
+    return [];   
   }
 }
 
@@ -48,8 +48,10 @@ function createUser(username, password) {
 // Kullanıcı doğrula (login)
 function validateUser(username, password) {
   const user = findByUsername(username);
+
   if (!user) return { success: false, message: 'Kullanıcı bulunamadı.' };
   if (user.password !== password) return { success: false, message: 'Şifre yanlış.' };
+
   return { success: true, user: { id: user.id, username: user.username } };
 }
 

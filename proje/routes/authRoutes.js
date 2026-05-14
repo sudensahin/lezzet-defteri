@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
+
+
 // Sayfalar
 router.get('/register', authController.showRegister);
 router.get('/login', authController.showLogin);

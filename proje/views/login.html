@@ -93,6 +93,7 @@
     document.getElementById('alert-error').classList.remove('visible');
 
     try {
+    
       const res = await fetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,12 +111,13 @@
         btn.disabled = false;
         btn.textContent = 'Giriş Yap';
       }
-    } catch {
-      document.getElementById('alert-error-msg').textContent = 'Sunucu hatası. Lütfen tekrar deneyin.';
-      document.getElementById('alert-error').classList.add('visible');
-      btn.disabled = false;
-      btn.textContent = 'Giriş Yap';
-    }
+   } catch (err) {
+  
+  document.getElementById('alert-error-msg').textContent = 'Sunucu hatası. Lütfen tekrar deneyin.';
+  document.getElementById('alert-error').classList.add('visible');
+  btn.disabled = false;
+  btn.textContent = 'Giriş Yap';
+}
   });
 </script>
 </body>

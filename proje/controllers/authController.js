@@ -37,6 +37,9 @@ function register(req, res) {
 
 // POST /auth/login → Kullanıcı giriş işlemi
 function login(req, res) {
+  
+  console.log("BODY:", req.body);
+
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -49,8 +52,8 @@ function login(req, res) {
     return res.status(401).json(result);
   }
 
-  // Oturum bilgisini client-side'da localStorage ile yönetiyoruz (basit yaklaşım)
   return res.status(200).json(result);
 }
 
 module.exports = { showRegister, showLogin, register, login };
+
